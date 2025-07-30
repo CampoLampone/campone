@@ -1,0 +1,6 @@
+env
+build
+.ropeproject
+campone.*
+*/__pycache__
+*/__pycache__/*
