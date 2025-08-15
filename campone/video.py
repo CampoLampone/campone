@@ -28,7 +28,7 @@ def build_gst_pipeline(width=1280, height=720, fps=30, flip=0):
     return GST_PIPELINE_CAMERA.format(width=width, height=height, fps=fps, flip=flip)
 
 def get_subscriber_hostname():
-    return "team" + socket.gethostname()[-1]
+    return "team" + socket.gethostname()[-1] + ".lan"
 
 class Video:
     def __init__(self, frame_rate, frame_size, flip=0):
