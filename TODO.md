@@ -1,3 +1,5 @@
 - [ ] Is polynomial scaling right on line follower
 - [ ] Test intersection detection real-time
 - [ ] Test line follower in real-time
+- [ ] Check on __init__.py if it needs to be this complicated
+- [ ] Tune P(I)D for Lane Following
