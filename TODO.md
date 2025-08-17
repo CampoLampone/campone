@@ -1,1 +1,3 @@
 - [ ] Is polynomial scaling right on line follower
+- [ ] Test intersection detection real-time
+- [ ] Test line follower in real-time

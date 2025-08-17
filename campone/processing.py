@@ -4,6 +4,11 @@ import math
 
 from scipy.optimize import linear_sum_assignment
 
+"""
+    Line follower
+"""
+
+
 def four_point_transform(image, rect, vert_size):
     # obtain a consistent order of the points and unpack them
     # individually
@@ -71,7 +76,7 @@ def thresh_and_process(hsv_img, low_thresh, up_thresh):
     return mask
 
 
-def find_biggest_contour(mask):
+def find_biggest_contour(mask, out="mask"):
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     max_area = 0
@@ -82,9 +87,12 @@ def find_biggest_contour(mask):
             max_area = area
             largest_contour = contour
 
-    output = np.zeros_like(mask)
-    cv2.drawContours(output, [largest_contour], -1, 255, thickness=cv2.FILLED)
-    return output
+    if out == "mask":
+        output = np.zeros_like(mask)
+        cv2.drawContours(output, [largest_contour], -1, 255, thickness=cv2.FILLED)
+        return output
+    elif out == "cont":
+        return largest_contour
 
 
 def cut_image_into_portions(img, n_por=5):
@@ -160,22 +168,25 @@ def normalize_and_agregate(shape, l_points, r_points):
     return round(fin_sum / len(center_coords), 3)
 
 
-def process_lines(frame):
-    img, vert_split = get_roi(frame, 0.6, 0.33, 0.0)
-    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+def process(frame):
+    img, vert_split = get_roi(frame, 0.6, 0.33, 0.0) # getting appropriate ROI
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV) # converting to HSV scale
 
     mask_yellow = thresh_and_process(hsv, (8, 154, 130), (180, 255, 255))
-    mask_white = thresh_and_process(hsv, (0, 0, 129), (180, 255, 255))
+    mask_yellow = cv2.morphologyEx(mask_yellow, cv2.MORPH_OPEN, np.ones((9, 9), np.uint8))
+    mask_yellow = cv2.morphologyEx(mask_yellow, cv2.MORPH_CLOSE, np.ones((3, 3), np.uint8))
 
+    mask_white = thresh_and_process(hsv, (0, 0, 129), (180, 255, 255))
     mask_white = cv2.morphologyEx(mask_white, cv2.MORPH_OPEN, np.ones((9, 9), np.uint8))
     mask_white = cv2.morphologyEx(mask_white, cv2.MORPH_CLOSE, np.ones((3, 3), np.uint8))
 
     only_yellow = cv2.bitwise_and(mask_yellow, mask_white)
-
     only_white = cv2.subtract(mask_white, only_yellow)
-    only_white = cv2.morphologyEx(only_white, cv2.MORPH_OPEN, np.ones((9, 9), np.uint8))
-    only_white = cv2.morphologyEx(only_white, cv2.MORPH_CLOSE, np.ones((3, 3), np.uint8))
 
+    return only_yellow, only_white
+
+
+def process_lines(only_yellow, only_white):
     white_big = find_biggest_contour(only_white)
     yellow_big = find_biggest_contour(only_yellow)
 
@@ -189,5 +200,29 @@ def process_lines(frame):
     elif len(white_centroids) < len(yellow_centroids): right_points, left_points = sort_by_distance(white_centroids, yellow_centroids)
     else: right_points, left_points = sort_normally(white_centroids, yellow_centroids)
 
-    final_error = normalize_and_agregate(img.shape, left_points, right_points)
+    final_error = normalize_and_agregate(only_yellow.shape, left_points, right_points)
     return final_error
+
+
+"""
+    Intersection detection
+"""
+
+
+def approx_intersection_contour(mask_yellow):
+    yellow_cont = find_biggest_contour(mask_yellow)
+    epsilon = 0.01 * cv2.arcLength(yellow_cont, True) # type: ignore
+    approx = cv2.approxPolyDP(yellow_cont, epsilon, True) # type: ignore
+    return approx
+
+
+def fit_and_check_orientation(approximation_contour):
+    [vx, vy, x, y] = cv2.fitLine(approximation_contour, cv2.DIST_L2, 0, 0.01, 0.01)
+    angle = np.arctan2(vy, vx) * 180 / np.pi
+    is_horizontal = bool(abs(angle) < 10 or abs(angle) > 170)
+    return is_horizontal
+
+
+def is_intersection(only_yellow):
+    approx = approx_intersection_contour(only_yellow)
+    return fit_and_check_orientation(approx)
