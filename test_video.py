@@ -1,17 +1,14 @@
-import campone
-import cv2
+from campone import Video, process_lines
 
-
-video = campone.Video(30, (1280, 720))
+video = Video(30, (1280, 720))
 
 cap = video.cap
 
 while True:
-    img = video.get_frame() #WHY IS IT NOT WORKING
+    frame = video.get_frame()
+    error = process_lines(frame)
 
-    img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-
-    video.show(img, img_gray)
+    video.show(frame)
     if video.exit():
         break
 
