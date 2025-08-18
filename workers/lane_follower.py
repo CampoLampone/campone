@@ -113,9 +113,9 @@ class LaneFollower:
             line_offset = process_lines(only_yellow, only_white)
 
             smooth_offset = self.median_filter.update(line_offset)
-            print(smooth_offset)
 
-            output = pid_step(line_offset, 100)
+            output = pid_step(smooth_offset, 100)
+            print(output)
             with self.lock:
                 self.motors = output
             time_delta = time.time() - start_time
