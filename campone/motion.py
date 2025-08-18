@@ -5,6 +5,7 @@ MOTOR_SPEED_BASE = 0X1A
 MOTOR_POSITION_BASE = 0X1B
 MOTORS_COAST = 0X30
 MOTORS_BRAKE = 0X30
+MOTORS_RELEASE_ESTOP = 0X69
 
 CS_PIN = 8
 
@@ -47,6 +48,9 @@ class Motion:
 
     def brake_motors(self):
         spi_transfer(self.spi, [MOTORS_BRAKE])
+
+    def release_estop(self):
+        spi_transfer(self.spi, [MOTORS_RELEASE_ESTOP])
 
     def __del__(self):
         self.spi.close()
