@@ -2,6 +2,8 @@ import cv2
 import numpy as np
 import threading
 import os
+import socket
+import math
 import campone
 
 # Define the distortion coefficients
@@ -23,6 +25,26 @@ K = np.array([[focal_length, 0, new_size[0] / 2], [0, focal_length, new_size[1] 
 dist_coeffs = np.array([k1, k2, p1, p2])
 
 
+# Pipelines
+GST_PIPELINE_STREAM = (
+    "appsrc caps=video/x-raw,format=BGR,width={width},height={height},framerate={fps}/1 "
+    "is-live=true block=true format=TIME do-timestamp=true ! queue ! videoconvert ! queue !"
+    "nvvidconv ! queue ! nvv4l2h264enc insert-sps-pps=true iframeinterval=15 idrinterval=30 bitrate=800000 ! queue ! "
+    "h264parse ! mpegtsmux ! "
+    "udpsink host={host} port=5000 sync=false async=false"
+)
+
+GST_PIPELINE_CAMERA = (
+    "nvarguscamerasrc wbmode=6 sensor-mode=3 ! "
+    "video/x-raw(memory:NVMM), width={width}, height={height}, exposuretimerange=(string)2000000 2000000, framerate={fps}/1, format=NV12 ! "
+    "nvvidconv flip-method={flip} ! "
+    "video/x-raw, width={width}, height={height}, format=BGRx ! "
+    "videoconvert ! "
+    "video/x-raw, format=BGR ! appsink"
+)
+
+MAX_FRAME_SIZE = (720, 1280, 3)
+
 class FakeCapture:
     def __init__(self, filename):
         moduledir = os.path.dirname(__file__)
@@ -38,10 +60,14 @@ class FakeCapture:
 
 class CameraCapture:
     def __init__(self, src=0):
+        self.frame_rate = 30
+        self.flip = 0
+        self.frame_size = (1280, 720)
+
         if not campone._on_jetson:
             self.cap = FakeCapture("testing.png")
         else:
-            self.cap = cv2.VideoCapture(f'nvarguscamerasrc sensor-mode=3 ! video/x-raw(memory:NVMM), width=1920, height=1080, format=(string)NV12, framerate=(fraction)29/1 ! nvvidconv ! video/x-raw, width=(int)1920, height=(int)1080, format=(string)BGRx ! videoconvert ! appsink')
+            self.cap = cv2.VideoCapture(GST_PIPELINE_CAMERA.format(width=self.frame_size[0], height=self.frame_size[1], fps=self.frame_rate, flip=self.flip), cv2.CAP_GSTREAMER)
             self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
         self.lock = threading.Lock()
         self.frame = None
@@ -55,7 +81,7 @@ class CameraCapture:
             if not ret:
                 continue
             # Resize to predefied size
-            frame = cv2.resize(frame, new_size)
+            frame = cv2.resize(frame, new_size) # type: ignore
             # Undistort the image using the specified coefficients
             undistorted_frame = cv2.undistort(frame, K, dist_coeffs)
             with self.lock:
@@ -69,3 +95,39 @@ class CameraCapture:
         self.running = False
         self.thread.join()
         self.cap.release()
+
+
+class UDPWriter:
+    def __init__(self):
+        self.frame_rate = 30
+        self.frame_size = (1280, 720)
+        self.out = cv2.VideoWriter(GST_PIPELINE_STREAM.format(width=self.frame_size[0], height=self.frame_size[1], fps=self.frame_rate, host=self.get_subscriber_hostname()), cv2.CAP_GSTREAMER, 0, self.frame_rate, self.frame_size, True)
+
+    def get_subscriber_hostname(self):
+        return "team" + socket.gethostname()[-1] + ".lan"    
+
+    def show(self, *frames):
+        n = len(frames)
+        r = math.ceil(math.sqrt(n))
+
+        tile_h = MAX_FRAME_SIZE[0] // r
+        tile_w = MAX_FRAME_SIZE[1] // r
+
+        out_frame = np.zeros(MAX_FRAME_SIZE, dtype=np.uint8)
+
+        i_imgs = 0
+        for i_y in range(r):
+            for i_x in range(r):
+                if i_imgs >= n:
+                    break
+                downscaled = cv2.resize(frames[i_imgs], (tile_w, tile_h), interpolation=cv2.INTER_AREA)
+                if downscaled.ndim == 2:
+                    downscaled = cv2.cvtColor(downscaled, cv2.COLOR_GRAY2BGR)
+
+                y1, y2 = i_y * tile_h, (i_y + 1) * tile_h
+                x1, x2 = i_x * tile_w, (i_x + 1) * tile_w
+                out_frame[y1:y2, x1:x2] = downscaled
+
+                i_imgs += 1
+
+        self.out.write(out_frame)

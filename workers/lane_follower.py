@@ -1,6 +1,4 @@
-import cv2
 import time
-import math
 import threading
 from campone.road_processing import process, process_lines
 
