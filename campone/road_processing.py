@@ -172,7 +172,7 @@ def process(frame):
     img, vert_split = get_roi(frame, 0.6, 0.33, 0.0) # getting appropriate ROI
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV) # converting to HSV scale
 
-    mask_yellow = thresh_and_process(hsv, (8, 154, 130), (180, 255, 255))
+    mask_yellow = thresh_and_process(hsv, (18, 150, 100), (26, 255, 255))
     mask_yellow = cv2.morphologyEx(mask_yellow, cv2.MORPH_OPEN, np.ones((9, 9), np.uint8))
     mask_yellow = cv2.morphologyEx(mask_yellow, cv2.MORPH_CLOSE, np.ones((3, 3), np.uint8))
 
