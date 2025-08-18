@@ -8,5 +8,5 @@ def run(cam):
             time.sleep(0.01)
             continue
 
-        print(f"Traffic light ran on frame shape {frame.shape}")
+        #print(f"Traffic light ran on frame shape {frame.shape}")
         time.sleep(0.1)  # simulate slow hough circles

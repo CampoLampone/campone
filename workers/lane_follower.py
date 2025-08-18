@@ -1,6 +1,19 @@
 import time
 import threading
 from campone.road_processing import process, process_lines
+import collections
+
+class MedianFilter:
+    def __init__(self, win_size):
+        self.win_size = win_size
+        self.window = collections.deque(maxlen=self.win_size)
+
+    def update(self, new_value):
+        self.window.append(new_value)
+        if len(self.window) < self.win_size:
+            return new_value  # Not enough data yet
+        sorted_window = sorted(self.window)
+        return sorted_window[self.win_size // 2]
 
 # PID coefficients
 Kp = 1.5
@@ -87,6 +100,8 @@ class LaneFollower:
         self.thread = threading.Thread(target=self.run, daemon=True)
         self.thread.start()
 
+        self.median_filter = MedianFilter(win_size=3)
+
     def run(self):
         while self.running:
             start_time = time.time()
@@ -96,7 +111,10 @@ class LaneFollower:
                 continue
             only_yellow, only_white = process(frame)
             line_offset = process_lines(only_yellow, only_white)
-            print(line_offset)
+
+            smooth_offset = self.median_filter.update(line_offset)
+            print(smooth_offset)
+
             output = pid_step(line_offset, 100)
             with self.lock:
                 self.motors = output

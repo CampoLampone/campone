@@ -14,8 +14,8 @@ if __name__ == "__main__":
 
     try:
         while True:
-            time.sleep(1)
-            print(lf.get_speed())
+            #time.sleep(1)
+            #print(lf.get_speed())
             writer.show(cam.get_frame())
     except KeyboardInterrupt:
         cam.stop()

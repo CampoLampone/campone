@@ -104,7 +104,7 @@ class UDPWriter:
         self.out = cv2.VideoWriter(GST_PIPELINE_STREAM.format(width=self.frame_size[0], height=self.frame_size[1], fps=self.frame_rate, host=self.get_subscriber_hostname()), cv2.CAP_GSTREAMER, 0, self.frame_rate, self.frame_size, True)
 
     def get_subscriber_hostname(self):
-        return "team" + socket.gethostname()[-1] + ".lan"    
+        return "danusasus" + ".lan"    
 
     def show(self, *frames):
         n = len(frames)

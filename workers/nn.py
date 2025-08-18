@@ -8,5 +8,5 @@ def run(cam):
             time.sleep(0.01)
             continue
 
-        print(f"NN ran on frame shape {frame.shape}")
+        #print(f"NN ran on frame shape {frame.shape}")
         time.sleep(0.2)  # simulate slow model
