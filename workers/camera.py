@@ -6,25 +6,6 @@ import socket
 import math
 import campone
 
-# Define the distortion coefficients
-k1 = -0.012  # Radial distortion coefficient
-k2 = 0.00012  # Radial distortion coefficient
-p1 = -0.0013  # Tangential distortion coefficient
-p2 = 0.0015  # Tangential distortion coefficient
-
-# Define the parameters for manual correction
-fov = 160  # Field of view (in degrees)
-
-new_size = (1280, 720)
-
-# Calculate the focal length based on the field of view
-focal_length = new_size[0] / (2 * np.tan(np.radians(fov) / 2))
-
-# Generate a simple perspective transformation matrix
-K = np.array([[focal_length, 0, new_size[0] / 2], [0, focal_length, new_size[1] / 2], [0, 0, 1]])
-dist_coeffs = np.array([k1, k2, p1, p2])
-
-
 # Pipelines
 GST_PIPELINE_STREAM = (
     "appsrc caps=video/x-raw,format=BGR,width={width},height={height},framerate={fps}/1 "
@@ -72,6 +53,20 @@ class CameraCapture:
         self.lock = threading.Lock()
         self.frame = None
         self.running = True
+
+        fov = 160
+        focal_length = self.frame_size[0] / (2 * np.tan(np.radians(fov) / 2))
+        K = np.array([[focal_length, 0, self.frame_size[0] / 2],
+                    [0, focal_length, self.frame_size[1] / 2],
+                    [0, 0, 1]])
+        init_k1 = -0.012
+        init_k2 = 0.00012
+        init_p1 = -0.0013
+        init_p2 = 0.0015
+
+        dist_coefs = np.array([init_k1, init_k2, init_p1, init_p2])
+        self.map1, self.map2 = cv2.initUndistortRectifyMap(K, dist_coefs, None, K, self.frame_size, cv2.CV_16SC2)
+
         self.thread = threading.Thread(target=self._update, daemon=True)
         self.thread.start()
 
@@ -81,9 +76,9 @@ class CameraCapture:
             if not ret:
                 continue
             # Resize to predefied size
-            frame = cv2.resize(frame, new_size) # type: ignore
+            # frame = cv2.resize(frame, new_size) # type: ignore
             # Undistort the image using the specified coefficients
-            undistorted_frame = cv2.undistort(frame, K, dist_coeffs)
+            undistorted_frame = cv2.remap(frame, self.map1, self.map2, interpolation=cv2.INTER_LINEAR)
             with self.lock:
                 self.frame = undistorted_frame.copy()
 
