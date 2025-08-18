@@ -115,7 +115,6 @@ class LaneFollower:
             smooth_offset = self.median_filter.update(line_offset)
 
             output = pid_step(smooth_offset, 100)
-            print(output)
             with self.lock:
                 self.motors = output
             time_delta = time.time() - start_time
