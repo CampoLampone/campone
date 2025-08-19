@@ -145,11 +145,32 @@ def sort_by_distance(centroids1, centroids2):
     return assigned_points, array1
 
 
-def normalize_and_agregate(shape, l_points, r_points):
+def agregate(shape, l_points, r_points):
     center_coords = []
     for i in range(l_points.shape[0]):
         center_coords.append([round(((l_points[i][0] + r_points[i][0]) / 2) - shape[1] / 2), round(((l_points[i][1] + r_points[i][1]) / 2) - shape[1] / 2)])
+    return center_coords
 
+def agregate_according_to_line(shape, centroid_points, is_right):
+    center_coords = []
+    for i in range(len(centroid_points)):
+        if is_right: center_coords.append([centroid_points[i][0] - round(shape[1] / 2), centroid_points[i][1]])
+        else: center_coords.append([centroid_points[i][0] + round(shape[1] / 2), centroid_points[i][1]])
+
+    return center_coords
+
+def check_line_orientation(white_cent, yellow_cent):
+    r_centroids = np.array(white_cent)
+    l_centroids = np.array(yellow_cent)
+
+    r_midpoint = np.average(r_centroids[:, 0])
+    l_midpoint = np.average(l_centroids[:, 0])
+
+    if l_midpoint > r_midpoint: return [], yellow_cent
+    else: return white_cent, yellow_cent
+
+
+def normalize(shape, center_coords):
     # normalize x-axis
     for point in center_coords:
         point[0] = round(point[0] / (shape[1] / 2), 3)
@@ -163,13 +184,13 @@ def normalize_and_agregate(shape, l_points, r_points):
     diff = upper_limit - lower_limit
     step = diff / len(center_coords)
 
-    fin_sum = 0
+    # Normalize y-coordinate to [0, 1] (top to bottom)
     for i, point in enumerate(center_coords):
-        point[1] = round(f(upper_limit - i * step), 3)
-        fin_sum += point[0] * point[1]
+        point[1] = round(i / (len(center_coords) - 1), 3) if len(center_coords) > 1 else 0.5
 
-    return round(fin_sum / len(center_coords), 3)
-
+    # Calculate final error as the average x-coordinate
+    final_error = sum(point[0] for point in center_coords) / len(center_coords)
+    return round(final_error, 3)
 
 def process(frame):
     img, vert_split = get_roi(frame, 0.4, 0.1, 0.0) # getting appropriate ROI
@@ -199,15 +220,39 @@ def process_lines(only_yellow, only_white):
     white_centroids = get_contour_centroids(white_big)
     yellow_centroids = get_contour_centroids(yellow_big)
 
-    if len(white_centroids) != 0 or len(yellow_centroids) != 0: # centroids not found
+    all_centroids_found = False
+
+    if len(white_centroids) != 0 and len(yellow_centroids) != 0: white_centroids, yellow_centroids = check_line_orientation(white_centroids, yellow_centroids)
+
+    if len(white_centroids) != 0 and len(yellow_centroids) != 0: # all centroids found
+        all_centroids_found = True
+
         if len(white_centroids) > len(yellow_centroids): left_points, right_points = sort_by_distance(yellow_centroids, white_centroids)
         elif len(white_centroids) < len(yellow_centroids): right_points, left_points = sort_by_distance(white_centroids, yellow_centroids)
         else: right_points, left_points = sort_normally(white_centroids, yellow_centroids)
 
-        final_error = normalize_and_agregate(only_yellow.shape, left_points, right_points)
-        return final_error
-    else:
+        center_coords = agregate(only_yellow.shape, left_points, right_points)
+    else: # one of the centroids or all are missing
+        if len(white_centroids) == 0: center_coords = agregate_according_to_line(only_yellow.shape, yellow_centroids, False) # recalculate according to left side
+        elif len(yellow_centroids) == 0: center_coords = agregate_according_to_line(only_yellow.shape, white_centroids, True) # recalculate according to right side
+        else: return None
+
+    if len(center_coords) == 0:
+        print("No line found!")
         return None
+
+    final_error = normalize(only_yellow.shape, center_coords)
+
+    # clamp final error if too big - disabled for now
+    # if final_error > 0.5: final_error = 0.4
+    # elif final_error < -0.5: final_error = -0.4
+
+    # add more weight to two-lane follower to make it more aggressive
+    if all_centroids_found: final_error = final_error * 1.5
+
+    # print(final_error)
+
+    return final_error
 
 """
     Intersection detection
