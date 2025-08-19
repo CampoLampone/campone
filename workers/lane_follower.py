@@ -25,7 +25,7 @@ alpha = 0.75
 RPM_MAX = 150.0
 MAX_DIFF_RPM = 100.0    # max steering contribution
 INTEGRAL_LIMIT = 0.5    # correction units (after applying Ki)
-DEADBAND = 0.00         # ignore small error signals
+DEADBAND = 0.02         # ignore small error signals
 SLEW_RPM_PER_S = 400.0  # max RPM change per second for smoother commands - we'll see about this one
 
 _integral = 0.0
@@ -80,9 +80,9 @@ def pid_step(error, base_rpm):
     R = clamp(R, -RPM_MAX, RPM_MAX)
 
     # Slew-rate limiting
-    # max_step = SLEW_RPM_PER_S * dt
-    # L = slew(_last_L, L, max_step)
-    # R = slew(_last_R, R, max_step)
+    max_step = SLEW_RPM_PER_S * dt
+    L = slew(_last_L, L, max_step)
+    R = slew(_last_R, R, max_step)
 
     # Save state
     _last_e, _last_t = error, t

@@ -14,6 +14,8 @@ if __name__ == "__main__":
     threading.Thread(target=nn.run, args=(cam,), daemon=True).start()
     threading.Thread(target=traffic_light_detector.run, args=(cam,), daemon=True).start()
 
+    motors_setpoint = [0, 0]
+
     try:
         while True:
             motors = lf.get_speed()
@@ -30,7 +32,7 @@ if __name__ == "__main__":
             #only_yellow, only_white = process(img)
 
             img = cam.get_frame()
-            writer.show(img)
+            writer.show(img[:,:,:3])
     except KeyboardInterrupt:
         cam.stop()
         motion.brake_motors()
