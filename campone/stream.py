@@ -50,4 +50,7 @@ class UDPWriter:
 
             self.out.write(out_frame)
         else:
-            self.out.write(frames[0])
+            one_frame = frames[0]
+            if one_frame.shape[:2][::-1] != self.frame_size:
+                one_frame = cv2.resize(one_frame, self.frame_size, interpolation=cv2.INTER_AREA)
+            self.out.write(one_frame)

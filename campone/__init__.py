@@ -16,6 +16,7 @@ print("Running on Jetson Nano:", _on_jetson)
 if _on_jetson:
     from .motion import Motion
 
+from .stream import UDPWriter
 from .road_processing import process_lines, is_intersection, process
 
-__all__ = ["Motion", "Video", "process_lines", "is_intersection", "process"]
+__all__ = ["Motion", "UDPWriter", "process_lines", "is_intersection", "process"]

@@ -2,14 +2,13 @@ import threading
 import campone
 
 from workers.camera import CameraCapture
-from workers.stream import UDPWriter
 from workers.lane_follower import LaneFollower
 from campone.road_processing import process, process_lines
 # from workers import nn, traffic_light_detector # - disabled for now
 
 if __name__ == "__main__":
     cam = CameraCapture(0)
-    writer = UDPWriter()
+    writer = campone.UDPWriter()
     lf = LaneFollower(cam)
     motion = campone.Motion()
 
