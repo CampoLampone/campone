@@ -1,19 +1,32 @@
-from campone import Video, process, process_lines, is_intersection
+import cv2
+from campone import stream
+import time
+import atexit
 
-video = Video(30, (1280, 720))
+GST_PIPELINE_CAMERA = (
+    "nvarguscamerasrc wbmode=6 sensor-mode=3 ! "
+    "video/x-raw(memory:NVMM), width={width}, height={height}, framerate={fps}/1, format=NV12 ! "
+    "nvvidconv flip-method={flip} ! "
+    "video/x-raw, width={width}, height={height}, format=BGRx ! appsink drop=1 max-buffers=1 sync=0"
+)
 
-cap = video.cap
+frame_rate = 30
+flip = 0
+frame_size = (1280, 720)
+cap = cv2.VideoCapture(GST_PIPELINE_CAMERA.format(width=frame_size[0], height=frame_size[1], fps=frame_rate, flip=flip), cv2.CAP_GSTREAMER)
+
+writer = stream.UDPWriter()
+
+atexit.register(cap.release)
 
 while True:
-    frame = video.get_frame()
-    filtered_yellow, filtered_white = process(frame)
-    error = process_lines(filtered_yellow, filtered_white)
+    start_time = time.time()
 
-    if is_intersection(filtered_yellow):
-        print("Is intersection!")
+    ret, frame = cap.read()
+    if not ret:
+        continue
+    writer.show(frame[:, :, :3])
 
-    video.show(frame)
-    if video.exit():
-        break
-
-video.release()
+    time_delta = time.time() - start_time
+    if (time_delta < (1 / frame_rate)):
+        time.sleep(time_delta)

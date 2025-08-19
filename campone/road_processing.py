@@ -199,7 +199,7 @@ def process_lines(only_yellow, only_white):
     white_centroids = get_contour_centroids(white_big)
     yellow_centroids = get_contour_centroids(yellow_big)
 
-    if len(white_centroids) != 0 or len(yellow_centroids) != 0: # centroids not found
+    if len(white_centroids) != 0 and len(yellow_centroids) != 0: # centroids not found
         if len(white_centroids) > len(yellow_centroids): left_points, right_points = sort_by_distance(yellow_centroids, white_centroids)
         elif len(white_centroids) < len(yellow_centroids): right_points, left_points = sort_by_distance(white_centroids, yellow_centroids)
         else: right_points, left_points = sort_normally(white_centroids, yellow_centroids)
