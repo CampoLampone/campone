@@ -16,16 +16,16 @@ class MedianFilter:
         return sorted_window[self.win_size // 2]
 
 # PID coefficients
-Kp = 1.5
+Kp = 1.1
 Ki = 0.0
-Kd = 0.3
+Kd = 0.0
 alpha = 0.75
 
 # Limit
 RPM_MAX = 150.0
 MAX_DIFF_RPM = 100.0    # max steering contribution
 INTEGRAL_LIMIT = 0.5    # correction units (after applying Ki)
-DEADBAND = 0.02         # ignore small error signals
+DEADBAND = 0.00         # ignore small error signals
 SLEW_RPM_PER_S = 400.0  # max RPM change per second for smoother commands - we'll see about this one
 
 _integral = 0.0
@@ -58,6 +58,8 @@ def pid_step(error, base_rpm):
         error = 0.0
 
     # PID terms
+    P = Kp * error
+
     _integral += error * dt
     I = Ki * _integral
     I = clamp(I, -INTEGRAL_LIMIT, INTEGRAL_LIMIT)
@@ -66,7 +68,7 @@ def pid_step(error, base_rpm):
     _d = alpha * _d + (1 - alpha) * de
     D = Kd * _d
 
-    corr = Kp * error + I + D
+    corr = P + I + D
     corr = clamp(corr, -1.0, 1.0)
 
     # Map to differential RPM
@@ -78,13 +80,15 @@ def pid_step(error, base_rpm):
     R = clamp(R, -RPM_MAX, RPM_MAX)
 
     # Slew-rate limiting
-    max_step = SLEW_RPM_PER_S * dt
-    L = slew(_last_L, L, max_step)
-    R = slew(_last_R, R, max_step)
+    # max_step = SLEW_RPM_PER_S * dt
+    # L = slew(_last_L, L, max_step)
+    # R = slew(_last_R, R, max_step)
 
     # Save state
     _last_e, _last_t = error, t
     _last_L, _last_R = L, R
+
+    print(time.time(), P, I, D, corr, error, L, R) # Debug line
 
     return L, R
 
@@ -111,10 +115,12 @@ class LaneFollower:
                 continue
             only_yellow, only_white = process(frame)
             line_offset = process_lines(only_yellow, only_white)
+            if line_offset == None:
+                continue
 
             smooth_offset = self.median_filter.update(line_offset)
 
-            output = pid_step(smooth_offset, 100)
+            output = pid_step(smooth_offset, 90)
             with self.lock:
                 self.motors = output
             time_delta = time.time() - start_time

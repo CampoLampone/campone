@@ -16,10 +16,21 @@ if __name__ == "__main__":
 
     try:
         while True:
-            left_mot, right_mot = lf.get_speed()
-            prin(left_mot, right_mot)
-            motion.set_motor_speed(motion.LEFT, -left_mot) # I dunno???
-            motion.set_motor_speed(motion.RIGHT, right_mot)
-            writer.show(cam.get_frame())
+            motors = lf.get_speed()
+            if motors is None: continue
+            motors = [ int(x) for x in motors ]
+
+            # Only update motors if the current speed is different from the last setpoint
+            if motors[0] != motors_setpoint[0] or motors[1] != motors_setpoint[1]:
+                motors_setpoint = motors  # Update the setpoint to the new speed
+                motion.set_motor_speed(motion.LEFT, -motors_setpoint[1])
+                motion.set_motor_speed(motion.RIGHT, motors_setpoint[0])
+
+            #from campone.road_processing import process, process_lines
+            #only_yellow, only_white = process(img)
+
+            img = cam.get_frame()
+            writer.show(img)
     except KeyboardInterrupt:
         cam.stop()
+        motion.brake_motors()

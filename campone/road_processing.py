@@ -169,7 +169,7 @@ def normalize_and_agregate(shape, l_points, r_points):
 
 
 def process(frame):
-    img, vert_split = get_roi(frame, 0.6, 0.33, 0.0) # getting appropriate ROI
+    img, vert_split = get_roi(frame, 0.4, 0.1, 0.0) # getting appropriate ROI
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV) # converting to HSV scale
 
     mask_yellow = thresh_and_process(hsv, (18, 150, 100), (26, 255, 255))
@@ -196,13 +196,15 @@ def process_lines(only_yellow, only_white):
     white_centroids = get_contour_centroids(white_big)
     yellow_centroids = get_contour_centroids(yellow_big)
 
-    if len(white_centroids) > len(yellow_centroids): left_points, right_points = sort_by_distance(yellow_centroids, white_centroids)
-    elif len(white_centroids) < len(yellow_centroids): right_points, left_points = sort_by_distance(white_centroids, yellow_centroids)
-    else: right_points, left_points = sort_normally(white_centroids, yellow_centroids)
+    if len(white_centroids) != 0 or len(yellow_centroids) != 0: # centroids not found
+        if len(white_centroids) > len(yellow_centroids): left_points, right_points = sort_by_distance(yellow_centroids, white_centroids)
+        elif len(white_centroids) < len(yellow_centroids): right_points, left_points = sort_by_distance(white_centroids, yellow_centroids)
+        else: right_points, left_points = sort_normally(white_centroids, yellow_centroids)
 
-    final_error = normalize_and_agregate(only_yellow.shape, left_points, right_points)
-    return final_error
-
+        final_error = normalize_and_agregate(only_yellow.shape, left_points, right_points)
+        return final_error
+    else:
+        return None
 
 """
     Intersection detection

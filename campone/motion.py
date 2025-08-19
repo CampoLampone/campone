@@ -1,5 +1,6 @@
 import Jetson.GPIO as GPIO
 import spidev
+import atexit
 
 MOTOR_SPEED_BASE = 0X1A
 MOTOR_POSITION_BASE = 0X1B
@@ -28,6 +29,9 @@ class Motion:
         self.spi.open(0, 0) # open SPI bus 0, CS 0
         self.spi.max_speed_hz = 500000   # 500 kHz
         self.spi.mode = 0
+
+        atexit.register(self.brake_motors)
+        self.release_estop()
 
     def get_board_version(self):
         self.spi.xfer([0x00, 0x00, 0x00, 0x00])
