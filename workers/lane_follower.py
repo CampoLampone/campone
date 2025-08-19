@@ -3,6 +3,7 @@ import threading
 from campone.road_processing import process, process_lines
 import collections
 
+
 class MedianFilter:
     def __init__(self, win_size):
         self.win_size = win_size

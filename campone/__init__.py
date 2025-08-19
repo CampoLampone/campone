@@ -15,7 +15,6 @@ print("Running on Jetson Nano:", _on_jetson)
 
 if _on_jetson:
     from .motion import Motion
-    from .video import Video
 
 from .road_processing import process_lines, is_intersection, process
 
