@@ -24,7 +24,7 @@ class UDPWriter:
         self.out_frame = np.zeros(MAX_FRAME_SIZE, dtype=np.uint8)
 
     def get_subscriber_hostname(self):
-        return "argon.lan"
+        return "team" + socket.gethostname()[-1] + ".lan"
 
     def show(self, *frames):
         n = len(frames)
