@@ -81,6 +81,7 @@ def find_biggest_contour(mask, out="mask"):
 
     max_area = 0
     global largest_contour
+    largest_contour = []
     for contour in contours:
         area = cv2.contourArea(contour)
         if area > max_area:
@@ -89,6 +90,8 @@ def find_biggest_contour(mask, out="mask"):
 
     if out == "mask":
         output = np.zeros_like(mask)
+        if len(largest_contour) == 0:
+            return output
         cv2.drawContours(output, [largest_contour], -1, 255, thickness=cv2.FILLED)
         return output
     elif out == "cont":

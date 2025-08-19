@@ -11,8 +11,6 @@ GST_PIPELINE_CAMERA = (
     "video/x-raw, width={width}, height={height}, format=BGRx ! appsink drop=1 max-buffers=1 sync=0"
 )
 
-MAX_FRAME_SIZE = (720, 1280, 3)
-
 
 class FakeCapture:
     def __init__(self, filename):

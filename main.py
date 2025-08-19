@@ -4,7 +4,8 @@ import campone
 from workers.camera import CameraCapture
 from workers.stream import UDPWriter
 from workers.lane_follower import LaneFollower
-from workers import nn, traffic_light_detector
+from campone.road_processing import process, process_lines
+# from workers import nn, traffic_light_detector # - disabled for now
 
 if __name__ == "__main__":
     cam = CameraCapture(0)
@@ -12,8 +13,9 @@ if __name__ == "__main__":
     lf = LaneFollower(cam)
     motion = campone.Motion()
 
-    threading.Thread(target=nn.run, args=(cam,), daemon=True).start()
-    threading.Thread(target=traffic_light_detector.run, args=(cam,), daemon=True).start()
+    # disabled for now
+    # threading.Thread(target=nn.run, args=(cam,), daemon=True).start()
+    # threading.Thread(target=traffic_light_detector.run, args=(cam,), daemon=True).start()
 
     motors_setpoint = [0, 0]
 
@@ -29,11 +31,9 @@ if __name__ == "__main__":
                 motion.set_motor_speed(motion.LEFT, -motors_setpoint[1])
                 motion.set_motor_speed(motion.RIGHT, motors_setpoint[0])
 
-            # from campone.road_processing import process, process_lines
-            # only_yellow, only_white = process(img)
-
             img = cam.get_frame()
-            writer.show(img[:, :, :3])
+            only_yellow, only_white = process(img)
+            writer.show(img[:, :, :3], only_yellow, only_white)
     except KeyboardInterrupt:
         cam.stop()
         motion.brake_motors()

@@ -17,10 +17,10 @@ class MedianFilter:
         return sorted_window[self.win_size // 2]
 
 # PID coefficients
-Kp = 1.1
+Kp = 0.2
 Ki = 0.0
 Kd = 0.0
-alpha = 0.75
+alpha = 0.25
 
 # Limit
 RPM_MAX = 150.0
@@ -81,9 +81,9 @@ def pid_step(error, base_rpm):
     R = clamp(R, -RPM_MAX, RPM_MAX)
 
     # Slew-rate limiting
-    max_step = SLEW_RPM_PER_S * dt
-    L = slew(_last_L, L, max_step)
-    R = slew(_last_R, R, max_step)
+    # max_step = SLEW_RPM_PER_S * dt
+    # L = slew(_last_L, L, max_step)
+    # R = slew(_last_R, R, max_step)
 
     # Save state
     _last_e, _last_t = error, t
@@ -121,7 +121,7 @@ class LaneFollower:
 
             smooth_offset = self.median_filter.update(line_offset)
 
-            output = pid_step(smooth_offset, 90)
+            output = pid_step(smooth_offset, 50)
             with self.lock:
                 self.motors = output
             time_delta = time.time() - start_time
