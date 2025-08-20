@@ -216,6 +216,10 @@ def process_lines(only_yellow, only_white):
 
 def approx_intersection_contour(mask_yellow):
     yellow_cont = find_biggest_contour(mask_yellow)
+
+    if len(yellow_cont) == 0:
+        return []
+
     epsilon = 0.01 * cv2.arcLength(yellow_cont, True) # type: ignore
     approx = cv2.approxPolyDP(yellow_cont, epsilon, True) # type: ignore
     return approx
@@ -230,4 +234,5 @@ def fit_and_check_orientation(approximation_contour):
 
 def is_intersection(only_yellow):
     approx = approx_intersection_contour(only_yellow)
+    if len(approx) == 0: return False
     return fit_and_check_orientation(approx)

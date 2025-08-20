@@ -3,7 +3,7 @@ import campone
 
 from workers.camera import CameraCapture
 from workers.lane_follower import LaneFollower
-from campone.road_processing import process, process_lines
+from campone.road_processing import process, process_lines, is_intersection
 # from workers import nn, traffic_light_detector # - disabled for now
 
 if __name__ == "__main__":
@@ -32,6 +32,10 @@ if __name__ == "__main__":
 
             img = cam.get_frame()
             only_yellow, only_white = process(img)
+
+            if is_intersection(only_yellow):
+                pass # write your own logic
+
             writer.show(img[:, :, :3], only_yellow, only_white)
     except KeyboardInterrupt:
         cam.stop()
