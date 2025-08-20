@@ -34,7 +34,7 @@ if __name__ == "__main__":
             only_yellow, only_white = process(img)
 
             if is_intersection(only_yellow):
-                pass # write your own logic
+                print("balls")
 
             writer.show(img[:, :, :3], only_yellow, only_white)
     except KeyboardInterrupt:

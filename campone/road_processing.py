@@ -215,7 +215,7 @@ def process_lines(only_yellow, only_white):
 
 
 def approx_intersection_contour(mask_yellow):
-    yellow_cont = find_biggest_contour(mask_yellow)
+    yellow_cont = find_biggest_contour(mask_yellow, out="cont")
 
     if len(yellow_cont) == 0:
         return []
