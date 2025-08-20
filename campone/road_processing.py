@@ -76,11 +76,10 @@ def thresh_and_process(hsv_img, low_thresh, up_thresh):
     return mask
 
 
-def find_biggest_contour(mask, out="mask"):
+def find_biggest_contour(mask, skip_draw = False):
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     max_area = 0
-    global largest_contour
     largest_contour = []
     for contour in contours:
         area = cv2.contourArea(contour)
@@ -88,14 +87,10 @@ def find_biggest_contour(mask, out="mask"):
             max_area = area
             largest_contour = contour
 
-    if out == "mask":
-        output = np.zeros_like(mask)
-        if len(largest_contour) == 0:
-            return output
+    output = np.zeros_like(mask)
+    if not skip_draw and len(largest_contour) > 0:
         cv2.drawContours(output, [largest_contour], -1, 255, thickness=cv2.FILLED)
-        return output
-    elif out == "cont":
-        return largest_contour
+    return output, largest_contour
 
 
 def cut_image_into_portions(img, n_por=5):
@@ -190,8 +185,18 @@ def process(frame):
 
 
 def process_lines(only_yellow, only_white):
-    white_big = find_biggest_contour(only_white)
-    yellow_big = find_biggest_contour(only_yellow)
+    yellow_big, yellow_cont = find_biggest_contour(only_yellow)
+    if yellow_cont is not None and len(yellow_cont) > 0:
+        # Create filled contour for yellow
+        yellow_filled = cv2.dilate(only_yellow, np.ones((21, 21), np.uint8))
+
+        h, w = only_white.shape
+        left_region = np.zeros_like(only_white)
+        cv2.floodFill(yellow_filled, None, (0, 0), 255)  # fill left side
+        left_region = cv2.bitwise_not(yellow_filled) # leave right
+
+        only_white = cv2.bitwise_and(only_white, left_region)
+    white_big, _ = find_biggest_contour(only_white)
 
     cut_image_into_portions(white_big)
     cut_image_into_portions(yellow_big)
@@ -215,7 +220,7 @@ def process_lines(only_yellow, only_white):
 
 
 def approx_intersection_contour(mask_yellow):
-    yellow_cont = find_biggest_contour(mask_yellow, out="cont")
+    _, yellow_cont = find_biggest_contour(mask_yellow, skip_draw=True)
 
     if len(yellow_cont) == 0:
         return []

@@ -17,17 +17,17 @@ class MedianFilter:
         return sorted_window[self.win_size // 2]
 
 # PID coefficients
-Kp = 0.2
-Ki = 0.0
-Kd = 0.0
+Kp = 0.35
+Ki = 0.1
+Kd = 0.1
 alpha = 0.25
 
 # Limit
 RPM_MAX = 150.0
-MAX_DIFF_RPM = 100.0    # max steering contribution
-INTEGRAL_LIMIT = 0.5    # correction units (after applying Ki)
-DEADBAND = 0.02         # ignore small error signals
-SLEW_RPM_PER_S = 400.0  # max RPM change per second for smoother commands - we'll see about this one
+MAX_DIFF_RPM = 100.0 # max steering contribution
+INTEGRAL_LIMIT = 0.5 # correction units (after applying Ki)
+DEADBAND = 0.02 # ignore small error signals
+SLEW_RPM_PER_S = 400.0 # max RPM change per second for smoother commands - we'll see about this one
 
 _integral = 0.0
 _d = 0.0
@@ -96,11 +96,12 @@ def pid_step(error, base_rpm):
 
 
 class LaneFollower:
-    def __init__(self, cam, freq=30):
+    def __init__(self, cam, base_speed=50, freq=30):
         self.cam = cam
         self.motors = None
         self.lock = threading.Lock()
         self.freq = freq
+        self.base_speed = base_speed
         self.running = True
         self.thread = threading.Thread(target=self.run, daemon=True)
         self.thread.start()
@@ -121,7 +122,7 @@ class LaneFollower:
 
             smooth_offset = self.median_filter.update(line_offset)
 
-            output = pid_step(smooth_offset, 50)
+            output = pid_step(smooth_offset, self.base_speed)
             with self.lock:
                 self.motors = output
             time_delta = time.time() - start_time
