@@ -42,6 +42,8 @@ class UDPWriter:
                     if i_imgs >= n:
                         break
                     frame = frames[i_imgs]
+                    if frame is None:
+                        continue
                     if len(frame.shape) == 3 and frame.shape[2] == 4:
                         frame = frame[:, :, :3]
                     downscaled = cv2.resize(frame, (tile_w, tile_h), interpolation=cv2.INTER_AREA)
