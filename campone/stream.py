@@ -41,7 +41,10 @@ class UDPWriter:
                 for i_x in range(r):
                     if i_imgs >= n:
                         break
-                    downscaled = cv2.resize(frames[i_imgs], (tile_w, tile_h), interpolation=cv2.INTER_AREA)
+                    frame = frames[i_imgs]
+                    if len(frame.shape) == 3 and frame.shape[2] == 4:
+                        frame = frame[:, :, :3]
+                    downscaled = cv2.resize(frame, (tile_w, tile_h), interpolation=cv2.INTER_AREA)
                     if downscaled.ndim == 2:
                         downscaled = cv2.cvtColor(downscaled, cv2.COLOR_GRAY2BGR)
 

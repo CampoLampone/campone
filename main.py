@@ -36,7 +36,7 @@ if __name__ == "__main__":
             if is_intersection(only_yellow):
                 pass # Implement your own logic
 
-            writer.show(img[:, :, :3], only_yellow, only_white)
+            writer.show(img, only_yellow, only_white)
     except KeyboardInterrupt:
         cam.stop()
         motion.brake_motors()

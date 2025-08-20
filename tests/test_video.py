@@ -25,7 +25,7 @@ while True:
     ret, frame = cap.read()
     if not ret:
         continue
-    writer.show(frame[:, :, :3])
+    writer.show(frame)
 
     time_delta = time.time() - start_time
     if (time_delta < (1 / frame_rate)):
