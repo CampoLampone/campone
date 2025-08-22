@@ -7,7 +7,7 @@ from campone.road_processing import process, is_intersection
 # from workers import nn, traffic_light_detector # - disabled for now
 
 if __name__ == "__main__":
-    cam = CameraCapture(0)
+    cam = CameraCapture()
     writer = campone.UDPWriter()
     lf = LaneFollower(cam)
     motion = campone.Motion()

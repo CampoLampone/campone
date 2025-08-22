@@ -26,7 +26,7 @@ class FakeCapture:
 
 
 class CameraCapture:
-    def __init__(self, src=0):
+    def __init__(self):
         self.frame_rate = 30
         self.flip = 0
         self.frame_size = (1280, 720)

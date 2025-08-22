@@ -17,10 +17,10 @@ class MedianFilter:
         return sorted_window[self.win_size // 2]
 
 # PID coefficients
-Kp = 0.35
-Ki = 0.1
-Kd = 0.1
-alpha = 0.25
+Kp = 0.4
+Ki = 0.01
+Kd = 0.00
+alpha = 0.2
 
 # Limit
 RPM_MAX = 150.0
@@ -89,14 +89,14 @@ def pid_step(error, base_rpm):
     _last_e, _last_t = error, t
     _last_L, _last_R = L, R
 
-    print(time.time(), P, I, D, corr, error, L, R) # Debug line
+    # print(time.time(), P, I, D, corr, error, L, R) # Debug line
 
     return L, R
 
 
 
 class LaneFollower:
-    def __init__(self, cam, base_speed=50, freq=30):
+    def __init__(self, cam, base_speed=50, freq=40):
         self.cam = cam
         self.motors = None
         self.lock = threading.Lock()
