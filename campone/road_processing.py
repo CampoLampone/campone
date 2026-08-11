@@ -292,13 +292,13 @@ def visualize_motor_push(frame, left, right):
     left_x_pos = int(1/8 * width)
     right_x_pos = int(7/8 * width)
 
-    y_pos = int(height / 2)
+    y_pos = int(9/10 * height)
 
-    left_scale = int(left - 50) * 50
-    right_scale = int(right - 50) * 50
+    left_scale = int(left - 30) * 4
+    right_scale = int(right - 30) * 4
 
-    y_end_left = y_pos + left_scale
-    y_end_right = y_pos + right_scale
+    y_end_left = y_pos - left_scale
+    y_end_right = y_pos - right_scale
 
     cv2.line(frame, [left_x_pos, y_pos], [left_x_pos, y_end_left], (255, 0, 0), thickness=4)
     cv2.line(frame, [right_x_pos, y_pos], [right_x_pos, y_end_right], (255, 0, 0), thickness=4)

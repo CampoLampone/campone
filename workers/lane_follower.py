@@ -150,8 +150,8 @@ class LaneFollower:
             output = pid_step(smooth_offset, self.base_speed)
 
             # Visualizing motor output
-            right = output[0]
-            left = output[1]
+            right = output[1]
+            left = output[0]
 
             print(left, right)
 

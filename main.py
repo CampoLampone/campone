@@ -30,9 +30,10 @@ if __name__ == "__main__":
             # Only update motors if the current speed is different from the last setpoint
             if motors[0] != motors_setpoint[0] or motors[1] != motors_setpoint[1]:
                 motors_setpoint = motors  # Update the setpoint to the new speed
-                # Note, notation is: [right, -left]
-                motion.set_motor_speed(motion.LEFT, -motors_setpoint[1])
-                motion.set_motor_speed(motion.RIGHT, motors_setpoint[0])
+                # Note, notation is: [left, right]
+                # TODO
+                #motion.set_motor_speed(motion.LEFT, motors_setpoint[0])
+                #motion.set_motor_speed(motion.RIGHT, motors_setpoint[1])
 
     except KeyboardInterrupt:
         cam.stop()
