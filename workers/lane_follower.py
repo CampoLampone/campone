@@ -2,7 +2,14 @@ import time
 import threading
 from campone.road_processing import process, process_lines
 import collections
+import numpy as np
 
+from campone.road_processing import process, get_clear_lines, process_lines, get_line_centroids
+from campone.road_processing import (
+    visualize_point_array,
+    visualize_line_offset,
+    visualize_motor_push
+)
 
 class MedianFilter:
     def __init__(self, win_size):
@@ -96,8 +103,9 @@ def pid_step(error, base_rpm):
 
 
 class LaneFollower:
-    def __init__(self, cam, base_speed=50, freq=40):
+    def __init__(self, cam, writer, base_speed=50, freq=40):
         self.cam = cam
+        self.writer = writer
         self.motors = None
         self.lock = threading.Lock()
         self.freq = freq
@@ -116,13 +124,41 @@ class LaneFollower:
                 time.sleep(0.01)
                 continue
             only_yellow, only_white = process(frame)
-            line_offset = process_lines(only_yellow, only_white)
+            frame_shape = only_yellow.shape
+            only_yellow, only_white = get_clear_lines(only_yellow, only_white)
+
+            debug_out1 = np.zeros(np.append(only_yellow.shape, 3))
+            debug_out1[:, :, 0] = only_yellow
+            debug_out1[:, :, 1] = only_white
+
+            left_points, right_points = get_line_centroids(only_yellow, only_white)
+            if left_points is None and right_points is None:
+                continue
+
+            visualize_point_array(debug_out1, left_points)
+            visualize_point_array(debug_out1, right_points)
+
+            line_offset = process_lines(frame_shape, left_points, right_points)
+
+            visualize_line_offset(frame, line_offset)
+
             if line_offset == None:
                 continue
 
             smooth_offset = self.median_filter.update(line_offset)
 
             output = pid_step(smooth_offset, self.base_speed)
+
+            # Visualizing motor output
+            right = output[0]
+            left = output[1]
+
+            print(left, right)
+
+            visualize_motor_push(frame, left, right)
+
+            self.writer.show(frame, debug_out1)
+
             with self.lock:
                 self.motors = output
             time_delta = time.time() - start_time

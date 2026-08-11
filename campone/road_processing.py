@@ -241,3 +241,59 @@ def is_intersection(only_yellow):
     approx = approx_intersection_contour(only_yellow)
     if len(approx) == 0: return False
     return fit_and_check_orientation(approx)
+
+
+def visualize_point_array(image, point_array):
+    for point in point_array:
+        cv2.drawMarker(
+        img=image,
+        position=point,
+        color=(0, 0, 255),  # BGR format (Red)
+        markerType=cv2.MARKER_TILTED_CROSS,
+        markerSize=10,  # Size in pixels
+        thickness=2,
+    )
+
+def visualize_line_offset(frame, line_offset):
+    height, width = frame.shape[:2]
+
+    x_pos = int(width / 2)
+    y_pos = int(7/8 * height)
+
+    line_len = int(line_offset * width)
+    x_end = x_pos + line_len
+
+    start = [x_pos, y_pos]
+    stop = [x_end, y_pos]
+
+    cv2.line(frame, start, stop, (255, 0, 0), thickness=3)
+
+    text = f"Deviation: {line_offset:.2f}"
+    text_pos = (x_pos, y_pos - 20)
+    cv2.putText(
+        img=frame,
+        text=text,
+        org=text_pos,
+        fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+        fontScale=1,
+        color=(255, 255, 255),
+        thickness=2,
+        lineType=cv2.LINE_AA,
+    )
+
+def visualize_motor_push(frame, left, right):
+    height, width = frame.shape[:2]
+
+    left_x_pos = int(1/8 * width)
+    right_x_pos = int(7/8 * width)
+
+    y_pos = int(height / 2)
+
+    left_scale = int(left - 50) * 50
+    right_scale = int(right - 50) * 50
+
+    y_end_left = y_pos + left_scale
+    y_end_right = y_pos + right_scale
+
+    cv2.line(frame, [left_x_pos, y_pos], [left_x_pos, y_end_left], (255, 0, 0), thickness=4)
+    cv2.line(frame, [right_x_pos, y_pos], [right_x_pos, y_end_right], (255, 0, 0), thickness=4)

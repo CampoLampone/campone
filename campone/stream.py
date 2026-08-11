@@ -59,6 +59,8 @@ class UDPWriter:
             self.out.write(self.out_frame)
         else:
             one_frame = frames[0]
+            if one_frame.ndim == 3 and one_frame.shape[2] == 4:
+                one_frame = one_frame[:, :, :3]
             if one_frame.shape[:2][::-1] != self.frame_size:
                 one_frame = cv2.resize(one_frame, self.frame_size, interpolation=cv2.INTER_AREA)
             self.out.write(one_frame)
