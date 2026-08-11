@@ -167,7 +167,7 @@ def normalize_and_agregate(shape, l_points, r_points):
 
 
 def process(frame):
-    img, vert_split = get_roi(frame, 0.4, 0.1, 0.0) # getting appropriate ROI
+    img, vert_split = get_roi(frame, 0.3, 0.05, 0.0) # getting appropriate ROI
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV) # converting to HSV scale
 
     mask_yellow = thresh_and_process(hsv, (18, 150, 100), (26, 255, 255))
@@ -183,8 +183,7 @@ def process(frame):
 
     return only_yellow, only_white
 
-
-def process_lines(only_yellow, only_white):
+def get_clear_lines(only_yellow, only_white):
     yellow_big, yellow_cont = find_biggest_contour(only_yellow)
     if yellow_cont is not None and len(yellow_cont) > 0:
         # Create filled contour for yellow
@@ -201,18 +200,24 @@ def process_lines(only_yellow, only_white):
     cut_image_into_portions(white_big)
     cut_image_into_portions(yellow_big)
 
+    return yellow_big, white_big
+
+def get_line_centroids(yellow_big, white_big):
     white_centroids = get_contour_centroids(white_big)
     yellow_centroids = get_contour_centroids(yellow_big)
 
-    if len(white_centroids) != 0 and len(yellow_centroids) != 0: # centroids not found
+    if len(white_centroids) != 0 and len(yellow_centroids) != 0:
         if len(white_centroids) > len(yellow_centroids): left_points, right_points = sort_by_distance(yellow_centroids, white_centroids)
         elif len(white_centroids) < len(yellow_centroids): right_points, left_points = sort_by_distance(white_centroids, yellow_centroids)
         else: right_points, left_points = sort_normally(white_centroids, yellow_centroids)
 
-        final_error = normalize_and_agregate(only_yellow.shape, left_points, right_points)
-        return final_error
-    else:
-        return None
+        return left_points, right_points
+    else: return None, None
+
+def process_lines(frame_shape, left_points, right_points):
+
+    final_error = normalize_and_agregate(frame_shape, left_points, right_points)
+    return final_error
 
 """
     Intersection detection
