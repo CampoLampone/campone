@@ -13,6 +13,8 @@ if __name__ == "__main__":
     lf = LaneFollower(cam, writer)
     motion = campone.Motion()
 
+    motion.set_pid_coeffs(3, 2, 0.4)
+
     # disabled for now
     # threading.Thread(target=nn.run, args=(cam,), daemon=True).start()
     # threading.Thread(target=traffic_light_detector.run, args=(cam,), daemon=True).start()
@@ -22,18 +24,18 @@ if __name__ == "__main__":
     try:
         while True:
             motors = lf.get_speed()
-            if motors is None: 
+            if motors is None:
                 time.sleep(0.01)
                 continue
             motors = [int(x) for x in motors]
 
+            print(motors_setpoint[0], motors_setpoint[1])
             # Only update motors if the current speed is different from the last setpoint
             if motors[0] != motors_setpoint[0] or motors[1] != motors_setpoint[1]:
                 motors_setpoint = motors  # Update the setpoint to the new speed
-                # Note, notation is: [left, right]
-                # TODO
-                #motion.set_motor_speed(motion.LEFT, motors_setpoint[0])
-                #motion.set_motor_speed(motion.RIGHT, motors_setpoint[1])
+                print(motors_setpoint[0], motors_setpoint[1])
+                motion.set_motor_speed(motion.LEFT, -motors_setpoint[1])
+                motion.set_motor_speed(motion.RIGHT, motors_setpoint[0])
 
     except KeyboardInterrupt:
         cam.stop()
