@@ -5,7 +5,8 @@ import atexit
 MOTOR_SPEED_BASE = 0X1A
 MOTOR_POSITION_BASE = 0X1B
 MOTORS_COAST = 0X30
-MOTORS_BRAKE = 0X30
+MOTORS_BRAKE = 0X40
+MOTORS_PID_TUNE = 0X50
 MOTORS_RELEASE_ESTOP = 0X69
 
 CS_PIN = 8
@@ -55,6 +56,14 @@ class Motion:
 
     def release_estop(self):
         spi_transfer(self.spi, [MOTORS_RELEASE_ESTOP])
+
+    def set_pid_coeffs(self, kp, ki, kd):
+        # TODO: Should check if they fit in 16 bit ints a better way
+        kp_int16 = int(kp * 1000) & 0xFFFF
+        ki_int16 = int(ki * 1000) & 0xFFFF
+        kd_int16 = int(kd * 1000) & 0xFFFF
+        # Should (i hope) not be too long for PIO :)
+        spi_transfer(self.spi, [MOTORS_PID_TUNE, (kp_int16 >> 8) & 0xFF, kp_int16 & 0xFF, (ki_int16 >> 8) & 0xFF, ki_int16 & 0xFF, (kd_int16 >> 8) & 0xFF, kd_int16 & 0xFF])
 
     def __del__(self):
         self.spi.close()
