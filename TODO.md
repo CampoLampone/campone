@@ -1,2 +1,0 @@
-- [ ] Refactor
-- [ ] Assemble line follower
