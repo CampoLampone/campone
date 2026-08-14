@@ -5,7 +5,6 @@ import time
 from workers.camera import CameraCapture
 from workers.lane_follower import LaneFollower
 from campone.road_processing import process, is_intersection
-# from workers import nn, traffic_light_detector # - disabled for now
 
 if __name__ == "__main__":
     cam = CameraCapture()
@@ -14,10 +13,6 @@ if __name__ == "__main__":
     motion = campone.Motion()
 
     motion.set_pid_coeffs(3, 2, 0.4)
-
-    # disabled for now
-    # threading.Thread(target=nn.run, args=(cam,), daemon=True).start()
-    # threading.Thread(target=traffic_light_detector.run, args=(cam,), daemon=True).start()
 
     motors_setpoint = [0, 0]
 
