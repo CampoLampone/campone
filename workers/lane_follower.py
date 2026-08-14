@@ -53,7 +53,6 @@ class LaneFollower:
         self.base_speed = base_speed
         self.running = True
         self.thread = threading.Thread(target=self.run, daemon=True)
-        self.thread.start()
 
         self._integral = 0.0
         self._d = 0.0
@@ -63,6 +62,8 @@ class LaneFollower:
         self._last_R = 0.0
 
         self.median_filter = MedianFilter(win_size=3)
+
+        self.thread.start()
 
     def pid_step(self, error, base_rpm):
         """
