@@ -7,6 +7,7 @@ MOTOR_POSITION_BASE = 0X1B
 MOTORS_COAST = 0X30
 MOTORS_BRAKE = 0X40
 MOTORS_PID_TUNE = 0X50
+LED_SET_RGB = 0X51
 MOTORS_RELEASE_ESTOP = 0X69
 
 CS_PIN = 8
@@ -64,6 +65,9 @@ class Motion:
         kd_int16 = int(kd * 1000) & 0xFFFF
         # Should (i hope) not be too long for PIO :)
         spi_transfer(self.spi, [MOTORS_PID_TUNE, (kp_int16 >> 8) & 0xFF, kp_int16 & 0xFF, (ki_int16 >> 8) & 0xFF, ki_int16 & 0xFF, (kd_int16 >> 8) & 0xFF, kd_int16 & 0xFF])
+
+    def set_led_rgb(self, r: int, g: int, b: int):
+        spi_transfer(self.spi, [LED_SET_RGB, r & 0xFF, g & 0xFF, b & 0xFF])
 
     def __del__(self):
         self.spi.close()
