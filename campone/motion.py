@@ -37,12 +37,12 @@ class Motion:
     def get_board_version(self):
         self.spi.xfer([0x00, 0x00, 0x00, 0x00])
 
-    def set_motor_speed(self, motor, speed):
+    def set_motor_speed(self, motor: int, speed: int):
         if motor > 1 : return
         speed_16 = speed & 0xFFFF
         spi_transfer(self.spi, [MOTOR_SPEED_BASE + 0X10 * motor, (speed_16 >> 8) & 0xFF, speed_16 & 0xFF])
 
-    def set_motor_position(self, motor, position, max_speed):
+    def set_motor_position(self, motor: int, position: int, max_speed: int):
         if motor > 1 : return
         speed_16 = max_speed & 0xFFFF
         position_8 = position & 0xFF
@@ -57,7 +57,7 @@ class Motion:
     def release_estop(self):
         spi_transfer(self.spi, [MOTORS_RELEASE_ESTOP])
 
-    def set_pid_coeffs(self, kp, ki, kd):
+    def set_pid_coeffs(self, kp: float, ki: float, kd: float):
         # TODO: Should check if they fit in 16 bit ints a better way
         kp_int16 = int(kp * 1000) & 0xFFFF
         ki_int16 = int(ki * 1000) & 0xFFFF
