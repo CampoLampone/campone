@@ -9,22 +9,19 @@ GST_PIPELINE_STREAM = (
     "videoconvert ! nvvidconv ! "
     "nvv4l2h264enc insert-sps-pps=true iframeinterval=15 idrinterval=15 "
     "control-rate=1 preset-level=1 bitrate=2000000 ! "
-    "h264parse config-interval=1 ! rtph264pay pt=96 ! "
-    "udpsink host={host} port=5000 sync=false async=false"
+    "h264parse config-interval=1 ! mpegtsmux alignment=7 ! "
+    "srtsink uri=srt://:5000 mode=listener wait-for-connection=false sync=false async=false latency=30"
 )
 
 MAX_FRAME_SIZE = (720, 1280, 3)
 
 
 class UDPWriter:
-    def __init__(self):
-        self.frame_rate = 30
-        self.frame_size = (1280, 720)
-        self.out = cv2.VideoWriter(GST_PIPELINE_STREAM.format(width=self.frame_size[0], height=self.frame_size[1], fps=self.frame_rate, host=self.get_subscriber_hostname()), cv2.CAP_GSTREAMER, 0, self.frame_rate, self.frame_size, True)
+    def __init__(self, frame_size: tuple[int, int] = (1280, 720), frame_rate: int = 30):
+        self.frame_rate = frame_rate
+        self.frame_size = frame_size
+        self.out = cv2.VideoWriter(GST_PIPELINE_STREAM.format(width=self.frame_size[0], height=self.frame_size[1], fps=self.frame_rate), cv2.CAP_GSTREAMER, 0, self.frame_rate, self.frame_size, True)
         self.out_frame = np.zeros(MAX_FRAME_SIZE, dtype=np.uint8)
-
-    def get_subscriber_hostname(self):
-        return "team" + socket.gethostname()[-1] + ".lan"
 
     def show(self, *frames):
         n = len(frames)
