@@ -1,36 +1,32 @@
-import threading
 import campone
-import time
+import queue
 
 from workers.camera import CameraCapture
 from workers.lane_follower import LaneFollower
-from campone.road_processing import process
 
 if __name__ == "__main__":
     cam = CameraCapture()
     writer = campone.UDPWriter()
-    lf = LaneFollower(cam, writer)
+    command_queue = queue.Queue()
+    lf = LaneFollower(cam, writer, command_queue)
     motion = campone.Motion()
 
     motion.set_pid_coeffs(3, 2, 0.4)
 
     motors_setpoint = [0, 0]
 
+    lf.start()
+
     try:
         while True:
-            motors = lf.get_speed()
-            if motors is None:
-                time.sleep(0.01)
-                continue
-            motors = [int(x) for x in motors]
+            source, payload = command_queue.get()
 
-            print(motors_setpoint[0], motors_setpoint[1])
-            # Only update motors if the current speed is different from the last setpoint
-            if motors[0] != motors_setpoint[0] or motors[1] != motors_setpoint[1]:
-                motors_setpoint = motors  # Update the setpoint to the new speed
-                print(motors_setpoint[0], motors_setpoint[1])
-                motion.set_motor_speed(motion.LEFT, -motors_setpoint[1])
-                motion.set_motor_speed(motion.RIGHT, motors_setpoint[0])
+            if source == 'lane_follower':
+                motors = [int(x) for x in payload]
+                if motors[0] != motors_setpoint[0] or motors[1] != motors_setpoint[1]:
+                    motors_setpoint = motors
+                    motion.set_motor_speed(motion.LEFT, -motors_setpoint[1])
+                    motion.set_motor_speed(motion.RIGHT, motors_setpoint[0])
 
     except KeyboardInterrupt:
         cam.stop()

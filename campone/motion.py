@@ -1,4 +1,4 @@
-import Jetson.GPIO as GPIO
+from Jetson import GPIO
 import spidev
 import atexit
 

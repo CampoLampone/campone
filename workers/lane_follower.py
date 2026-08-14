@@ -1,8 +1,8 @@
 import time
 import threading
-from campone.road_processing import process, process_lines
 import collections
 import numpy as np
+from typing import final
 
 from campone.road_processing import process, get_clear_lines, process_lines, get_line_centroids
 from campone.road_processing import (
@@ -44,25 +44,27 @@ def slew(prev, target, max_step):
     return target
 
 class LaneFollower:
-    def __init__(self, cam, writer, base_speed=50, freq=40):
+    def __init__(self, cam, writer, command_queue, base_speed=50):
         self.cam = cam
         self.writer = writer
-        self.motors = None
-        self.lock = threading.Lock()
-        self.freq = freq
+        self.command_queue = command_queue
         self.base_speed = base_speed
-        self.running = True
         self.thread = threading.Thread(target=self.run, daemon=True)
 
+        self.reset_state()
+
+    def reset_state(self):
         self._integral = 0.0
         self._d = 0.0
         self._last_e = 0.0
         self._last_t = time.time()
         self._last_L = 0.0
         self._last_R = 0.0
-
         self.median_filter = MedianFilter(win_size=3)
 
+    def start(self):
+        self.reset_state()
+        self.running = True
         self.thread.start()
 
     def pid_step(self, error, base_rpm):
@@ -119,11 +121,10 @@ class LaneFollower:
 
     def run(self):
         self._last_t = time.time() # Reset so D doesn't explode
+        last_frame_id = None
         while self.running:
-            start_time = time.time()
-            frame = self.cam.get_frame()
-            if frame is None:
-                time.sleep(0.01)
+            frame, last_frame_id = self.cam.wait_for_frame(last_frame_id)
+            if frame is None or not self.running:
                 continue
             only_yellow, only_white = process(frame)
             frame_shape = only_yellow.shape
@@ -161,17 +162,7 @@ class LaneFollower:
 
             self.writer.show(frame, debug_out1)
 
-            with self.lock:
-                self.motors = output
-            time_delta = time.time() - start_time
-            if (time_delta < (1 / self.freq)):
-                time.sleep((1 / self.freq) - time_delta)
-
-
-
-    def get_speed(self):
-        with self.lock:
-            return self.motors
+            self.command_queue.put(('lane_follower', output))
 
     def stop(self):
         self.running = False
