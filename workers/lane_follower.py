@@ -49,7 +49,6 @@ class LaneFollower:
         self.writer = writer
         self.command_queue = command_queue
         self.base_speed = base_speed
-        self.thread = threading.Thread(target=self.run, daemon=True)
 
         self.reset_state()
 
@@ -62,8 +61,9 @@ class LaneFollower:
         self._last_R = 0.0
         self.median_filter = MedianFilter(win_size=3)
 
-    def start(self):
-        self.reset_state()
+    def start(self, reset = True):
+        if reset: self.reset_state()
+        self.thread = threading.Thread(target=self.run, daemon=True)
         self.running = True
         self.thread.start()
 
@@ -165,5 +165,7 @@ class LaneFollower:
             self.command_queue.put(('lane_follower', output))
 
     def stop(self):
+        self.command_queue.put(('lane_follower', [0, 0])) # Stop the motors
         self.running = False
         self.thread.join()
+        del(self.thread) # Threads can only be started once
