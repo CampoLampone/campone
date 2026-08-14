@@ -4,7 +4,7 @@ import time
 
 from workers.camera import CameraCapture
 from workers.lane_follower import LaneFollower
-from campone.road_processing import process, is_intersection
+from campone.road_processing import process
 
 if __name__ == "__main__":
     cam = CameraCapture()

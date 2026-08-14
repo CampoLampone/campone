@@ -17,6 +17,6 @@ if _on_jetson:
     from .motion import Motion
 
 from .stream import UDPWriter
-from .road_processing import process_lines, is_intersection, process
+from .road_processing import process_lines, process
 
-__all__ = ["Motion", "UDPWriter", "process_lines", "is_intersection", "process"]
+__all__ = ["Motion", "UDPWriter", "process_lines", "process"]

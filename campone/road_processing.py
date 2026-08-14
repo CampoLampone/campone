@@ -223,31 +223,6 @@ def process_lines(frame_shape, left_points, right_points):
     Intersection detection
 """
 
-
-def approx_intersection_contour(mask_yellow):
-    _, yellow_cont = find_biggest_contour(mask_yellow, skip_draw=True)
-
-    if len(yellow_cont) == 0:
-        return []
-
-    epsilon = 0.01 * cv2.arcLength(yellow_cont, True) # type: ignore
-    approx = cv2.approxPolyDP(yellow_cont, epsilon, True) # type: ignore
-    return approx
-
-
-def fit_and_check_orientation(approximation_contour):
-    [vx, vy, x, y] = cv2.fitLine(approximation_contour, cv2.DIST_L2, 0, 0.01, 0.01)
-    angle = np.arctan2(vy, vx) * 180 / np.pi
-    is_horizontal = bool(abs(angle) < 10 or abs(angle) > 170)
-    return is_horizontal
-
-
-def is_intersection(only_yellow):
-    approx = approx_intersection_contour(only_yellow)
-    if len(approx) == 0: return False
-    return fit_and_check_orientation(approx)
-
-
 def visualize_point_array(image, point_array):
     for point in point_array:
         cv2.drawMarker(
