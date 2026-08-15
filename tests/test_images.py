@@ -3,13 +3,13 @@ import cv2
 import curses
 
 sys.path.append('../workers')
-from workers.camera import CameraCapture
-from campone.stream import UDPWriter
+from workers.camera import CameraCaptureWorker
+from campone.stream import VideoStreamer
 
 
 def capture_loop(stdscr):
-    cam = CameraCapture()
-    writer = UDPWriter()
+    cam = CameraCaptureWorker()
+    writer = VideoStreamer()
 
     curses.curs_set(0)       # hide cursor
     stdscr.nodelay(True)     # non-blocking input

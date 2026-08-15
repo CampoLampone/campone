@@ -43,11 +43,11 @@ def slew(prev, target, max_step):
     if target < prev - max_step: return prev - max_step
     return target
 
-class LaneFollower:
-    def __init__(self, cam, writer, command_queue, base_speed=50):
+class LaneFollowerWorker:
+    def __init__(self, cam, command_queue, stream_worker=None, base_speed=50):
         self.cam = cam
-        self.writer = writer
         self.command_queue = command_queue
+        self.stream_worker = stream_worker
         self.base_speed = base_speed
 
         self.reset_state()
@@ -75,7 +75,6 @@ class LaneFollower:
         """
 
         t = time.time()
-        # dt = max(1e-3, t - self._last_t)
         dt = clamp(t - self._last_t, 1e-3, 5e-2)
 
         # Apply deadband
@@ -126,6 +125,10 @@ class LaneFollower:
             frame, last_frame_id = self.cam.wait_for_frame(last_frame_id)
             if frame is None or not self.running:
                 continue
+
+            if self.stream_worker is not None:
+                self.stream_worker.set_frame("lane_main", frame)
+
             only_yellow, only_white = process(frame)
             frame_shape = only_yellow.shape
             only_yellow, only_white = get_clear_lines(only_yellow, only_white)
@@ -160,12 +163,13 @@ class LaneFollower:
 
             visualize_motor_push(frame, left, right)
 
-            self.writer.show(frame, debug_out1)
+            if self.stream_worker is not None:
+                self.stream_worker.set_frame("lane_debug", debug_out1)
 
-            self.command_queue.put(('lane_follower', output))
+            self.command_queue.put(('motor_command', output))
 
     def stop(self):
-        self.command_queue.put(('lane_follower', [0, 0])) # Stop the motors
+        self.command_queue.put(('motor_command', [0, 0])) # Stop the motors
         self.running = False
         self.thread.join()
         del(self.thread) # Threads can only be started once

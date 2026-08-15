@@ -1,10 +1,12 @@
-import cv2
-from campone import stream
 import time
-from workers.camera import CameraCapture
 
-cam = CameraCapture()
-writer = stream.UDPWriter()
+import cv2
+
+from campone.stream import VideoStreamer
+from workers.camera import CameraCaptureWorker
+
+cam = CameraCaptureWorker()
+writer = VideoStreamer()
 
 while True:
     frame = cam.get_frame()

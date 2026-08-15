@@ -27,7 +27,7 @@ class FakeCapture:
         pass
 
 
-class CameraCapture:
+class CameraCaptureWorker:
     def __init__(self):
         self.frame_rate = 30
         self.flip = 0

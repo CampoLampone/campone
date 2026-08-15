@@ -1,17 +1,22 @@
 import campone
 import queue
+import threading
 
-from workers.camera import CameraCapture
-from workers.lane_follower import LaneFollower
-from workers.udp_socket import UdpSocket, UdpPacket
+from workers.camera import CameraCaptureWorker
+from workers.lane_follower import LaneFollowerWorker
+from workers.udp_socket import UdpSocketWorker, UdpPacket
+from workers.stream_worker import StreamWorker
 
 if __name__ == "__main__":
-    cam = CameraCapture()
-    writer = campone.UDPWriter()
+    camera_worker = CameraCaptureWorker()
     command_queue = queue.Queue(maxsize=100)
-    lf = LaneFollower(cam, writer, command_queue)
+
+    stream_worker = StreamWorker()
+    stream_worker.start()
+
+    lf = LaneFollowerWorker(camera_worker, command_queue, stream_worker)
     motion = campone.Motion()
-    sock = UdpSocket(command_queue)
+    sock_worker = UdpSocketWorker(command_queue)
 
     motion.set_pid_coeffs(3, 2, 0.4)
 
@@ -23,7 +28,7 @@ if __name__ == "__main__":
         while True:
             source, payload = command_queue.get()
 
-            if source == 'lane_follower':
+            if source == 'motor_command':
                 motors = [int(x) for x in payload]
                 if motors[0] != motors_setpoint[0] or motors[1] != motors_setpoint[1]:
                     motors_setpoint = motors
@@ -35,5 +40,6 @@ if __name__ == "__main__":
                 print(f"{packet.data} from {packet.address}") # Replace this with your solution
 
     except KeyboardInterrupt:
-        cam.stop()
+        camera_worker.stop()
         motion.brake_motors()
+        stream_worker.stop()

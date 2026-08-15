@@ -8,7 +8,7 @@ class UdpPacket:
     data: bytes = b''
     address: str = "0.0.0.0"
 
-class UdpSocket:
+class UdpSocketWorker:
     def __init__(self, command_queue):
         self.host = '0.0.0.0'
         self.port = 6969

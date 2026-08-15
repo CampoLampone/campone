@@ -16,7 +16,7 @@ GST_PIPELINE_STREAM = (
 MAX_FRAME_SIZE = (720, 1280, 3)
 
 
-class UDPWriter:
+class VideoStreamer:
     def __init__(self, frame_size: tuple[int, int] = (1280, 720), frame_rate: int = 30):
         self.frame_rate = frame_rate
         self.frame_size = frame_size
@@ -33,25 +33,22 @@ class UDPWriter:
 
             self.out_frame[:] = 0
 
-            i_imgs = 0
-            for i_y in range(r):
-                for i_x in range(r):
-                    if i_imgs >= n:
-                        break
-                    frame = frames[i_imgs]
-                    if frame is None:
-                        continue
-                    if frame.ndim == 3 and frame.shape[2] == 4:
-                        frame = frame[:, :, :3]
-                    downscaled = cv2.resize(frame, (tile_w, tile_h), interpolation=cv2.INTER_AREA)
-                    if downscaled.ndim == 2:
-                        downscaled = cv2.cvtColor(downscaled, cv2.COLOR_GRAY2BGR)
+            for i, frame in enumerate(frames):
+                if frame is None:
+                    continue
 
-                    y1, y2 = i_y * tile_h, (i_y + 1) * tile_h
-                    x1, x2 = i_x * tile_w, (i_x + 1) * tile_w
-                    self.out_frame[y1:y2, x1:x2] = downscaled
+                if frame.ndim == 3 and frame.shape[2] == 4:
+                    frame = frame[:, :, :3]
 
-                    i_imgs += 1
+                downscaled = cv2.resize(frame, (tile_w, tile_h), interpolation=cv2.INTER_LINEAR)
+
+                if downscaled.ndim == 2:
+                    downscaled = cv2.cvtColor(downscaled, cv2.COLOR_GRAY2BGR)
+
+                i_y, i_x = divmod(i, r)
+                y1, y2 = i_y * tile_h, (i_y + 1) * tile_h
+                x1, x2 = i_x * tile_w, (i_x + 1) * tile_w
+                self.out_frame[y1:y2, x1:x2] = downscaled
 
             self.out.write(self.out_frame)
         else:
@@ -59,5 +56,5 @@ class UDPWriter:
             if one_frame.ndim == 3 and one_frame.shape[2] == 4:
                 one_frame = one_frame[:, :, :3]
             if one_frame.shape[:2][::-1] != self.frame_size:
-                one_frame = cv2.resize(one_frame, self.frame_size, interpolation=cv2.INTER_AREA)
+                one_frame = cv2.resize(one_frame, self.frame_size, interpolation=cv2.INTER_LINEAR)
             self.out.write(one_frame)

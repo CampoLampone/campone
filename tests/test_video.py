@@ -1,7 +1,9 @@
-import cv2
-from campone import stream
-import time
 import atexit
+import time
+
+import cv2
+
+from campone.stream import VideoStreamer
 
 GST_PIPELINE_CAMERA = (
     "nvarguscamerasrc wbmode=6 sensor-mode=3 ! "
@@ -15,7 +17,7 @@ flip = 0
 frame_size = (1280, 720)
 cap = cv2.VideoCapture(GST_PIPELINE_CAMERA.format(width=frame_size[0], height=frame_size[1], fps=frame_rate, flip=flip), cv2.CAP_GSTREAMER)
 
-writer = stream.UDPWriter()
+writer = VideoStreamer()
 
 atexit.register(cap.release)
 
