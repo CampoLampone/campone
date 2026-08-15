@@ -1,11 +1,10 @@
-import campone
 import queue
-import threading
 
+import campone
 from workers.camera import CameraCaptureWorker
 from workers.lane_follower import LaneFollowerWorker
-from workers.udp_socket import UdpSocketWorker, UdpPacket
 from workers.stream_worker import StreamWorker
+from workers.udp_socket import UdpPacket, UdpSocketWorker
 
 if __name__ == "__main__":
     camera_worker = CameraCaptureWorker()

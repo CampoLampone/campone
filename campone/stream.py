@@ -1,7 +1,7 @@
-import cv2
 import math
+
+import cv2
 import numpy as np
-import socket
 
 GST_PIPELINE_STREAM = (
     "appsrc caps=video/x-raw,format=BGR,width={width},height={height},framerate={fps}/1 "
