@@ -1,6 +1,8 @@
-from Jetson import GPIO
-import spidev
 import atexit
+from enum import IntEnum
+
+import spidev
+from Jetson import GPIO
 
 MOTOR_SPEED_BASE = 0X1A
 MOTOR_POSITION_BASE = 0X1B
@@ -23,8 +25,10 @@ def spi_transfer(spi, data):
     GPIO.output(CS_PIN, GPIO.HIGH)
     return resp
 
-class Motion:
-    LEFT, RIGHT = range(2)
+class RTBoard:
+    class Motor(IntEnum):
+        LEFT = 0
+        RIGHT = 1
 
     def __init__(self):
         self.spi = spidev.SpiDev()
@@ -38,12 +42,12 @@ class Motion:
     def get_board_version(self):
         self.spi.xfer([0x00, 0x00, 0x00, 0x00])
 
-    def set_motor_speed(self, motor: int, speed: int):
+    def set_motor_speed(self, motor: Motor, speed: int):
         if motor > 1 : return
         speed_16 = speed & 0xFFFF
         spi_transfer(self.spi, [MOTOR_SPEED_BASE + 0X10 * motor, (speed_16 >> 8) & 0xFF, speed_16 & 0xFF])
 
-    def set_motor_position(self, motor: int, position: int, max_speed: int):
+    def set_motor_position(self, motor: Motor, position: int, max_speed: int):
         if motor > 1 : return
         speed_16 = max_speed & 0xFFFF
         position_8 = position & 0xFF

@@ -15,10 +15,11 @@ if __name__ == "__main__":
     stream_worker.start()
 
     lf = LaneFollowerWorker(camera_worker, command_queue, stream_worker)
-    motion = campone.Motion()
+    rt_board = campone.RTBoard()
     sock_worker = UdpSocketWorker(command_queue)
 
-    motion.set_pid_coeffs(3, 2, 0.4)
+    # You can tune the Real-Time board's PID right here in runtime
+    # rt_board.set_pid_coeffs(3, 2, 0.4)
 
     motors_setpoint = [0, 0]
 
@@ -32,8 +33,8 @@ if __name__ == "__main__":
                 motors = [int(x) for x in payload]
                 if motors[0] != motors_setpoint[0] or motors[1] != motors_setpoint[1]:
                     motors_setpoint = motors
-                    motion.set_motor_speed(motion.LEFT, -motors_setpoint[1])
-                    motion.set_motor_speed(motion.RIGHT, motors_setpoint[0])
+                    rt_board.set_motor_speed(rt_board.Motor.LEFT, -motors_setpoint[1])
+                    rt_board.set_motor_speed(rt_board.Motor.RIGHT, motors_setpoint[0])
 
             elif source == 'udp_socket':
                 packet: UdpPacket = payload
@@ -41,5 +42,5 @@ if __name__ == "__main__":
 
     except KeyboardInterrupt:
         camera_worker.stop()
-        motion.brake_motors()
+        rt_board.brake_motors()
         stream_worker.stop()

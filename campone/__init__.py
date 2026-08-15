@@ -14,9 +14,9 @@ _on_jetson = is_jetson_nano()
 print("Running on Jetson Nano:", _on_jetson)
 
 if _on_jetson:
-    from .motion import Motion
+    from .rt_board import RTBoard
 
 from .stream import VideoStreamer
 from .road_processing import process_lines, process
 
-__all__ = ["Motion", "VideoStreamer", "process_lines", "process"]
+__all__ = ["RTBoard", "VideoStreamer", "process_lines", "process"]
