@@ -29,6 +29,9 @@ if __name__ == "__main__":
             source, payload = command_queue.get()
 
             if source == 'motor_command':
+                if payload == "brake":
+                    rt_board.brake_motors()
+                    continue
                 motors = [int(x) for x in payload]
                 if motors[0] != motors_setpoint[0] or motors[1] != motors_setpoint[1]:
                     motors_setpoint = motors

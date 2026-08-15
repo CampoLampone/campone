@@ -1,15 +1,19 @@
-import time
-import threading
 import collections
-import numpy as np
-from typing import final
+import threading
+import time
 
-from campone.road_processing import process, get_clear_lines, process_lines, get_line_centroids
+import numpy as np
+
 from campone.road_processing import (
-    visualize_point_array,
+    get_clear_lines,
+    get_line_centroids,
+    process,
+    process_lines,
     visualize_line_offset,
-    visualize_motor_push
+    visualize_motor_push,
+    visualize_point_array,
 )
+
 
 class MedianFilter:
     def __init__(self, win_size):
@@ -49,6 +53,8 @@ class LaneFollowerWorker:
         self.command_queue = command_queue
         self.stream_worker = stream_worker
         self.base_speed = base_speed
+
+        self.running = False
 
         self.reset_state()
 
@@ -126,9 +132,6 @@ class LaneFollowerWorker:
             if frame is None or not self.running:
                 continue
 
-            if self.stream_worker is not None:
-                self.stream_worker.set_frame("lane_main", frame)
-
             only_yellow, only_white = process(frame)
             frame_shape = only_yellow.shape
             only_yellow, only_white = get_clear_lines(only_yellow, only_white)
@@ -139,6 +142,8 @@ class LaneFollowerWorker:
 
             left_points, right_points = get_line_centroids(only_yellow, only_white)
             if left_points is None and right_points is None:
+                if self.stream_worker is not None:
+                    self.stream_worker.set_frame("lane_main", frame.copy())
                 continue
 
             visualize_point_array(debug_out1, left_points)
@@ -149,6 +154,8 @@ class LaneFollowerWorker:
             visualize_line_offset(frame, line_offset)
 
             if line_offset == None:
+                if self.stream_worker is not None:
+                    self.stream_worker.set_frame("lane_main", frame.copy())
                 continue
 
 
@@ -164,12 +171,19 @@ class LaneFollowerWorker:
             visualize_motor_push(frame, left, right)
 
             if self.stream_worker is not None:
+                self.stream_worker.set_frame("lane_main", frame.copy())
                 self.stream_worker.set_frame("lane_debug", debug_out1)
 
             self.command_queue.put(('motor_command', output))
 
     def stop(self):
-        self.command_queue.put(('motor_command', [0, 0])) # Stop the motors
+        if not self.running:
+            return
+
+        if self.stream_worker is not None:
+            self.stream_worker.clear_frame("lane_main")
+            self.stream_worker.clear_frame("lane_debug")
+        self.command_queue.put(('motor_command', "brake")) # Stop the motors
         self.running = False
         self.thread.join()
         del(self.thread) # Threads can only be started once
