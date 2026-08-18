@@ -183,7 +183,7 @@ class LaneFollowerWorker:
         if self.stream_worker is not None:
             self.stream_worker.clear_frame("lane_main")
             self.stream_worker.clear_frame("lane_debug")
-        self.command_queue.put(('motor_command', "brake")) # Stop the motors
         self.running = False
         self.thread.join()
         del(self.thread) # Threads can only be started once
+        self.command_queue.put(('motor_command', "brake")) # Stop the motors
